@@ -76,6 +76,9 @@ base = pygame.image.load('images/base.png')
 ggu = pygame.image.load('images/ggu.png')
 bullet_up = pygame.image.load('images/ammo.png')
 e = pygame.image.load('images/e.png')
+bb = pygame.image.load('images/bboom.png')
+bl = pygame.image.load('images/blopatka.png')
+bz = pygame.image.load('images/bzvezdochka.png')
 e_rect = e.get_rect()
 e_rect.width = e_rect.height
 slide_rect = e.get_rect()
@@ -86,14 +89,23 @@ bullet_left = pygame.transform.rotate(bullet_up, 270)
 booms = []
 shoots = []
 plshoot = 1
-
-
+basehp = 2
+initbase = True
+lopatka = 0
 
 
 
 lev = levels.lev[level]
 matrix = lev
 
+class Base:
+    def __init__(self, basehp):
+        self.basehp = basehp
+        initbase = False
+
+    def destroy(self):
+        if self.basehp == 0:
+            base = dbase
 
 class Boom:
     def __init__(self, e_rectcenter):
@@ -143,6 +155,10 @@ class Shoot:
             if up == 1:
                 booms.append(Boom((self.x * 2 + 10, self.y * 2 + 20)))
                 return True
+            elif up == 6:
+                booms.append(Boom((self.x * 2 + 10, self.y * 2 + 10)))
+                bbase.basehp -= 1
+                return True
             elif up == 2:
                 matrix[self.y // 10 + 1][self.x // 10] = 0
                 play.wall = 0
@@ -154,6 +170,10 @@ class Shoot:
             down = matrix[self.y // 10][self.x // 10]
             if down == 1:
                 booms.append(Boom((self.x * 2 + 10, self.y * 2)))
+                return True
+            elif down == 6:
+                booms.append(Boom((self.x * 2 + 10, self.y * 2 + 10)))
+                bbase.basehp -= 1
                 return True
             elif down == 2:
                 matrix[self.y // 10][self.x // 10] = 0
@@ -167,6 +187,10 @@ class Shoot:
             if left == 1:
                 booms.append(Boom((self.x * 2 + 20, self.y * 2 + 10)))
                 return True
+            elif left == 6:
+                booms.append(Boom((self.x * 2 + 14, self.y * 2 + 10)))
+                bbase.basehp -= 1
+                return True
             elif left == 2:
                 matrix[self.y // 10][self.x // 10 + 1] = 0
                 play.wall = 0
@@ -178,6 +202,10 @@ class Shoot:
             right = matrix[self.y // 10][self.x // 10]
             if right == 1:
                 booms.append(Boom((self.x * 2, self.y * 2 + 10)))
+                return True
+            elif right == 6:
+                booms.append(Boom((self.x * 2 + 10, self.y * 2 + 10)))
+                bbase.basehp -= 1
                 return True
             elif right == 2:
                 matrix[self.y // 10][self.x // 10] = 0
@@ -196,6 +224,26 @@ class Shoot:
             screen.blit(bullet_right, (self.x * 2, self.y * 2))
         elif self.orient == 4:
             screen.blit(bullet_left, (self.x * 2, self.y * 2))
+
+class Bonus:
+    def __init__(self, matrix):
+        global bb, bl, bz
+        self.type = random.randint(1, 3)
+        if self.type == 1:
+            self.image = bb
+        elif self.type == 2:
+            self.image = bl
+        elif self.type == 3:
+            self.image = bz
+        self.x = 0
+        self.y = 0
+        while matrix[self.y][self.x] != 0:
+            self.x = random.randint(1, 23)
+            self.y = random.randint(1, 23)
+        self.rect = pygame.Rect((self.x * 20, self.y * 20), (20, 20))
+
+    def render(self, screen):
+        screen.blit(self.image, (self.x * 20, self.y * 20))
 
 
 def pole(a):
@@ -221,6 +269,7 @@ def pole(a):
             x = 0
             y += 1
         i += 1
+
 
 class Player:
     def __init__(self, pos1, pos2):
@@ -338,6 +387,10 @@ p2count = 20
 kleo = 100
 key = 0
 enable = 0
+reloads = 60
+bonuses = []
+shbonus = random.randint(300, 700)
+
 
 while running:
     for event in pygame.event.get():
@@ -391,6 +444,9 @@ while running:
                 enable = 0
 
     fight -= 1
+    if initbase == True:
+        bbase = Base(basehp)
+        initbase = False
     if plshoot == 5:
         shoots.append(Shoot(play.ggx, play.ggy, play.orient, 1))
         plshoot = 1
@@ -408,6 +464,13 @@ while running:
 
     play.moveP(key)
     play.walls(matrix)
+
+    if shbonus == 0:
+        bonuses.append(Bonus(matrix))
+        shbonus = random.randint(300, 700)
+    else:
+        shbonus -= 1
+
     m1m = 0
     while m1m < len(shoots):
         m2m = 0
@@ -427,6 +490,80 @@ while running:
 
             m2m += 1
         m1m += 1
+    fps = (str((float(int(clock.get_fps() * 10)) // 10)))
+    fps2 = 'fps: ' + fps
+
+    text = font.render(fps2, 1, (255, 255, 10))
+    textpos = text.get_rect()
+    textpos = (510, 30)
+
+    text2 = font2.render(u'Осталось врагов: ' + str(p2count), 1, (255, 255, 10))
+    textpos2 = text2.get_rect()
+    textpos2 = (510, 60)
+
+    text3 = font3.render(u'Вы победили!', 1, (255, 10, 10))
+    textpos3 = text3.get_rect(centerx=(screen.get_width() - 140) // 2, centery=screen.get_height() // 2)
+    text4 = font.render(u'Уровень: ' + str(level + 1), 1, (255, 255, 10))
+    textpos4 = text4.get_rect()
+    textpos4 = (510, 5)
+    text5 = font3.render(u'Вы проиграли!', 1, (255, 10, 10))
+    textpos5 = text5.get_rect(centerx=(screen.get_width() - 140) // 2, centery=screen.get_height() // 2)
+
+    text9 = font3.render(u'Вы прошли игру!', 1, (255, 10, 10))
+    textpos9 = text5.get_rect(centerx=(screen.get_width()) // 2, centery=screen.get_height() // 2)
+
+    text6 = font2.render(u'Уровень игрока: ' + str(play.power - 1), 1, (255, 255, 10))
+    textpos6 = text2.get_rect()
+    textpos6 = (510, 80)
+
+    text7 = font2.render(u'Здоровье игрока: ' + str(play.hp), 1, (255, 255, 10))
+    textpos7 = text2.get_rect()
+    textpos7 = (510, 100)
+
+    text8 = font2.render(u'Жизни игрока: ' + str(plives), 1, (255, 255, 10))
+    textpos8 = text2.get_rect()
+    textpos8 = (510, 120)
+    pygame.display.flip()
+
+    for k in reversed(range(0, len(bonuses))):
+        if play.rect.colliderect(bonuses[k].rect):
+            if bonuses[k].type == 1:
+                for i in reversed(range(0, len(enemyes))):
+                    booms.append(Boom((enemyes[i].rect.center)))
+                    enemyes.pop(i)
+                    counten += 1
+                p2count -= counten
+                counten = 0
+                bonuses.pop(k)
+            elif bonuses[k].type == 2:
+                matrix[23][11] = 1
+                matrix[23][13] = 1
+                matrix[22][11] = 1
+                matrix[22][13] = 1
+                matrix[22][12] = 1
+                bonuses.pop(k)
+                lopatka = 1
+                lopatka_s = 300
+            elif bonuses[k].type == 3:
+                bonuses.pop(k)
+                play.power += 1
+                if play.power > 4:
+                    play.power = 4
+                play.hp += 5
+    if lopatka == 1:
+        if lopatka_s == 0:
+            matrix[23][11] = 2
+            matrix[23][13] = 2
+            matrix[22][11] = 2
+            matrix[22][13] = 2
+            matrix[22][12] = 2
+            lopatka = 0
+        else:
+            lopatka_s -= 1
+    for i in reversed(range(0, len(booms))):
+        booms[i].step()
+        if booms[i].destroy():
+            booms.pop(i)
 
     if zet == 0:
         play.render(screen)
@@ -448,6 +585,9 @@ while running:
         else:
             zet += 1
 
+    if bbase.basehp == 0:
+        base = dbase
+
     screen.fill(black)
     pygame.draw.rect(screen, black, (0, 0, 500, 500), 5)
     pole(matrix)
@@ -457,5 +597,23 @@ while running:
         shoot.render(screen)
     for boom in booms:
         boom.render(screen)
+    for bonus in bonuses:
+        bonus.render(screen)
+    screen.blit(text, textpos)
+    screen.blit(text2, textpos2)
+    screen.blit(text4, textpos4)
+    screen.blit(text6, textpos6)
+    screen.blit(text7, textpos7)
+    screen.blit(text8, textpos8)
+
+    if bbase.basehp < 1 or plives < 1:
+        screen.blit(text5, textpos5)
+        if reloads != 0:
+            reloads -= 1
+        else:
+            time.sleep(1)
+            reloads = 60
+            running = False
+            go = True
     pygame.display.flip()
     clock.tick(30)
