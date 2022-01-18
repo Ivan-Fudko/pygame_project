@@ -1,10 +1,7 @@
-import pygame
 import random
 import time
-from pygame.font import Font
+import pygame
 import levels
-
-
 
 pygame.init()
 size = 650, 500
