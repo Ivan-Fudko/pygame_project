@@ -23,8 +23,6 @@ escape_button = font3.render('Выход', 1, (255, 255, 10))
 escape_button_pos = pygame.Rect(450, 100, 154, 45)
 
 
-
-
 def mmenu(go):
     global new_game_button, escape_button, new_game_button_pos, escape_button_pos, running
     while go:
@@ -61,7 +59,6 @@ def mmenu(go):
 
 mmenu(go)
 
-
 level = 0
 dbase = pygame.image.load('images/dbase.png')
 water = pygame.image.load('images/water.png')
@@ -76,6 +73,9 @@ e = pygame.image.load('images/e.png')
 bb = pygame.image.load('images/bboom.png')
 bl = pygame.image.load('images/blopatka.png')
 bz = pygame.image.load('images/bzvezdochka.png')
+enu = pygame.image.load('images/vrag1.png')
+enu2 = pygame.image.load('images/vrag2.png')
+enu3 = pygame.image.load('images/vrag3.png')
 e_rect = e.get_rect()
 e_rect.width = e_rect.height
 slide_rect = e.get_rect()
@@ -90,10 +90,9 @@ basehp = 2
 initbase = True
 lopatka = 0
 
-
-
 lev = levels.lev[level]
 matrix = lev
+
 
 class Base:
     def __init__(self, basehp):
@@ -103,6 +102,7 @@ class Base:
     def destroy(self):
         if self.basehp == 0:
             base = dbase
+
 
 class Boom:
     def __init__(self, e_rectcenter):
@@ -222,6 +222,7 @@ class Shoot:
         elif self.orient == 4:
             screen.blit(bullet_left, (self.x * 2, self.y * 2))
 
+
 class Bonus:
     def __init__(self, matrix):
         global bb, bl, bz
@@ -294,11 +295,11 @@ class Player:
                 self.orient = key
                 self.move = 0
             if (self.ggy % 10) == 0:
-                    key = 0
-                    self.move = 0
+                key = 0
+                self.move = 0
             elif key == 0:
-                    self.ggy -= 1
-                    self.move = 1
+                self.ggy -= 1
+                self.move = 1
 
         elif self.orient == 2 and self.wall != 2:
             if key == 2:
@@ -367,6 +368,187 @@ class Player:
         screen.blit(self.gg, (self.ggx * 2, self.ggy * 2))
 
 
+class Enemy:
+    def __init__(self, tip, resp):
+        self.orient = 2
+        self.wall = 0
+        self.shor = 0
+        self.timer = 0
+        self.k = 40
+        self.lap = 0
+        self.tip = tip
+        self.resp = resp
+        if self.tip == 1:
+            self.enu = enu
+            self.end = pygame.transform.rotate(self.enu, 180)
+            self.enl = pygame.transform.rotate(self.enu, 90)
+            self.enr = pygame.transform.rotate(self.enu, 270)
+            self.en = self.end
+            self.hp = 15
+        elif self.tip == 2:
+            self.enu = enu2
+            self.end = pygame.transform.rotate(self.enu, 180)
+            self.enl = pygame.transform.rotate(self.enu, 90)
+            self.enr = pygame.transform.rotate(self.enu, 270)
+            self.en = self.end
+            self.hp = 30
+        elif self.tip == 3:
+            self.enu = enu3
+            self.end = pygame.transform.rotate(self.enu, 180)
+            self.enl = pygame.transform.rotate(self.enu, 90)
+            self.enr = pygame.transform.rotate(self.enu, 270)
+            self.en = self.end
+            self.hp = 45
+        if resp == 1:
+            self.x, self.y = 10, 10
+        elif resp == 2:
+            self.x, self.y = 120, 10
+        elif resp == 3:
+            self.x, self.y = 230, 10
+        self.rect = pygame.Rect(self.x * 2, self.y * 2, 20, 20)
+
+    def walls(self, matrix):
+        if (self.y % 10) == 0 and (self.x % 10) == 0:
+            Y_axisd = matrix[self.y // 10 + 1][self.x // 10]
+            Y_axisu = matrix[self.y // 10 - 1][self.x // 10]
+            X_axisr = matrix[self.y // 10][self.x // 10 + 1]
+            X_axisl = matrix[self.y // 10][self.x // 10 - 1]
+            if (Y_axisd == 1 or Y_axisd == 2 or Y_axisd == 4 or Y_axisd == 6) and self.orient == 2:
+                self.wall = 2
+            elif (Y_axisu == 1 or Y_axisu == 2 or Y_axisu == 4 or Y_axisu == 6) and self.orient == 1:
+                self.wall = 1
+            elif (X_axisr == 1 or X_axisr == 2 or X_axisr == 4 or X_axisr == 6) and self.orient == 4:
+                self.wall = 4
+            elif (X_axisl == 1 or X_axisl == 2 or X_axisl == 4 or X_axisl == 6) and self.orient == 3:
+                self.wall = 3
+            else:
+                self.wall = 0
+
+    def move(self):
+        if self.wall != self.orient and self.timer == 0:
+            self.shor += 1
+            if self.orient == 1:
+                self.en = self.enu
+                self.y -= 1
+            elif self.orient == 2:
+                self.en = self.end
+                self.y += 1
+            elif self.orient == 3:
+                self.en = self.enl
+                self.x -= 1
+            elif self.orient == 4:
+                self.en = self.enr
+                self.x += 1
+        elif self.wall == self.orient and self.timer == 0:
+            if self.lap == 0:
+                if self.orient == 1:
+                    shoots.append(Shoot(self.x, self.y - 4, self.orient, 0))
+                elif self.orient == 2:
+                    shoots.append(Shoot(self.x, self.y + 4, self.orient, 0))
+                elif self.orient == 3:
+                    shoots.append(Shoot(self.x - 4, self.y, self.orient, 0))
+                elif self.orient == 4:
+                    shoots.append(Shoot(self.x + 4, self.y, self.orient, 0))
+                self.lap = 1
+            elif self.lap == 1:
+                oldor = self.orient
+                if oldor == 1:
+                    oldor2 = 2
+                elif oldor == 2:
+                    oldor2 = 1
+                elif oldor == 3:
+                    oldor2 = 4
+                else:
+                    oldor2 = 3
+                while self.orient == oldor:
+                    self.orient = random.randint(1, 4)
+                self.timer = 30
+                self.lap = 0
+
+        elif self.timer == 10:
+            if self.orient == 1:
+                self.en = self.enu
+            elif self.orient == 2:
+                self.en = self.end
+            elif self.orient == 3:
+                self.en = self.enl
+            elif self.orient == 4:
+                self.en = self.enr
+            self.timer -= 1
+        else:
+            self.timer -= 1
+        if self.shor == 30 and self.wall == 0:
+            oldor = self.orient
+            if oldor == 1:
+                oldor2 = 2
+            elif oldor == 2:
+                oldor2 = 1
+            elif oldor == 3:
+                oldor2 = 4
+            else:
+                oldor2 = 3
+            self.orient = random.randint(1, 4)
+            if oldor == self.orient or self.orient == oldor2:
+                pass
+            else:
+                self.timer = 30
+            self.shor = 0
+        self.rect = pygame.Rect(self.x * 2, self.y * 2, 20, 20)
+
+    def render(self, screen):
+        screen.blit(self.en, (self.x * 2, self.y * 2))
+
+    def enshoot(self):
+        if self.k == 0:
+            if self.orient == 1:
+                shoots.append(Shoot(self.x, self.y - 4, self.orient, 0))
+            elif self.orient == 2:
+                shoots.append(Shoot(self.x, self.y + 4, self.orient, 0))
+            elif self.orient == 3:
+                shoots.append(Shoot(self.x - 4, self.y, self.orient, 0))
+            elif self.orient == 4:
+                shoots.append(Shoot(self.x + 4, self.y, self.orient, 0))
+            self.k = 50
+        elif self.timer != 0:
+            pass
+        else:
+            self.k -= 1
+
+    def touch(self):
+        if play.orient == 1:
+            oldor2 = 2
+        elif play.orient == 2:
+            oldor2 = 1
+        elif play.orient == 3:
+            oldor2 = 4
+        else:
+            oldor2 = 3
+        if self.orient == 1:
+            if self.x == play.ggx and self.y - 20 == play.ggy:
+                self.orient = oldor2
+                shoots.append(Shoot(self.x, self.y - 4, self.orient, 0))
+                self.timer = 10
+                self.wall = 1
+        elif self.orient == 2:
+            if self.x == play.ggx and self.y + 20 == play.ggy:
+                self.orient = oldor2
+                shoots.append(Shoot(self.x, self.y + 4, self.orient, 0))
+                self.timer = 10
+                self.wall = 2
+        elif self.orient == 3:
+            if self.x - 20 == play.ggx and self.y == play.ggy:
+                self.orient = oldor2
+                shoots.append(Shoot(self.x - 4, self.y, self.orient, 0))
+                self.timer = 10
+                self.wall = 3
+        elif self.orient == 4:
+            if self.x - 20 == play.ggx and self.y == play.ggy:
+                self.orient = oldor2
+                shoots.append(Shoot(self.x + 4, self.y, self.orient, 0))
+                self.timer = 10
+                self.wall = 4
+
+
 ggx = 9
 ggy = 22
 i = 0
@@ -388,12 +570,12 @@ reloads = 60
 bonuses = []
 shbonus = random.randint(300, 700)
 
-
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
+
             if event.key == pygame.K_LEFT and play.orient == 3 and play.wall != 3:
                 key = 3
                 enable = 1
@@ -426,6 +608,10 @@ while running:
                     elif play.power == 4:
                         plshoot = 19
                     fight = 20
+
+
+
+
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT and play.orient == 3:
                 key = 0
@@ -440,10 +626,14 @@ while running:
                 key = 0
                 enable = 0
 
+    # ilolo += 1
+    # slide_rect.x = (ilolo / 2) * 20
     fight -= 1
+
     if initbase == True:
         bbase = Base(basehp)
         initbase = False
+
     if plshoot == 5:
         shoots.append(Shoot(play.ggx, play.ggy, play.orient, 1))
         plshoot = 1
@@ -461,6 +651,23 @@ while running:
 
     play.moveP(key)
     play.walls(matrix)
+
+    if player2 > 0:
+        if len(enemyes) < 4:
+            if shet == 0:
+                player2 -= 1
+                respoun = random.randint(1, 3)
+                tip = random.randint(1, 3)
+                qwerty = Enemy(tip, respoun)
+                enemyes.append(qwerty)
+                shet = 100
+            shet -= 1
+
+    for enemy in enemyes:
+        enemy.walls(matrix)
+        enemy.enshoot()
+        enemy.move()
+        enemy.walls(matrix)
 
     if shbonus == 0:
         bonuses.append(Bonus(matrix))
@@ -487,6 +694,7 @@ while running:
 
             m2m += 1
         m1m += 1
+
     fps = (str((float(int(clock.get_fps() * 10)) // 10)))
     fps2 = 'fps: ' + fps
 
@@ -520,7 +728,38 @@ while running:
     text8 = font2.render(u'Жизни игрока: ' + str(plives), 1, (255, 255, 10))
     textpos8 = text2.get_rect()
     textpos8 = (510, 120)
-    pygame.display.flip()
+
+    for i in reversed(range(0, len(enemyes))):
+        for k in reversed(range(0, len(shoots))):
+            if shoots[k].sight == 0:
+                pass
+            else:
+                if enemyes[i].rect.colliderect(shoots[k].rect):
+                    enemyes[i].hp -= 15
+                    booms.append(Boom((shoots[k].rect.center)))
+                    shoots.pop(k)
+                    if enemyes[i].hp <= 0:
+                        enemyes.pop(i)
+                        i -= 1
+                        p2count -= 1
+
+    for i in reversed(range(0, len(enemyes))):
+        for k in reversed(range(0, len(bonuses))):
+            if enemyes[i].rect.colliderect(bonuses[k].rect):
+                bonuses.pop(k)
+
+    for i in reversed(range(0, len(shoots))):
+        if shoots[i].sight == 1:
+            pass
+        else:
+            if play.rect.colliderect(shoots[i].rect):
+                play.hp -= 15
+                booms.append(Boom((shoots[i].rect.center)))
+                shoots.pop(i)
+                if play.hp < 0:
+                    booms.append(Boom((play.rect.center)))
+                    zet = 1
+                    plives -= 1
 
     for k in reversed(range(0, len(bonuses))):
         if play.rect.colliderect(bonuses[k].rect):
@@ -547,6 +786,7 @@ while running:
                 if play.power > 4:
                     play.power = 4
                 play.hp += 5
+
     if lopatka == 1:
         if lopatka_s == 0:
             matrix[23][11] = 2
@@ -562,18 +802,23 @@ while running:
         if booms[i].destroy():
             booms.pop(i)
 
-    if zet == 0:
-        play.render(screen)
-    for shoot in shoots:
-        shoot.render(screen)
+    for i in reversed(range(0, len(enemyes))):
+        Rect = play.rect
+        if Rect.colliderect(enemyes[i].rect):
+            if play.power > enemyes[i].tip:
+                booms.append(Boom((enemyes[i].rect.center)))
+                enemyes.pop(i)
+                p2count -= 1
+            elif play.power <= enemyes[i].tip:
+                if zet == 0:
+                    booms.append(Boom((play.rect.center)))
+                    plives -= 1
+                    zet = 1
+
     for i in reversed(range(0, len(shoots))):
         shoots[i].step()
         if shoots[i].destroy(matrix):
             shoots.pop(i)
-    for i in reversed(range(0, len(booms))):
-        booms[i].step()
-        if booms[i].destroy():
-            booms.pop(i)
 
     if zet != 0 and plives > 0:
         if zet == 20:
@@ -588,29 +833,63 @@ while running:
     screen.fill(black)
     pygame.draw.rect(screen, black, (0, 0, 500, 500), 5)
     pole(matrix)
+    for enemy in enemyes:
+        enemy.render(screen)
     if zet == 0:
         play.render(screen)
     for shoot in shoots:
         shoot.render(screen)
-    for boom in booms:
-        boom.render(screen)
     for bonus in bonuses:
         bonus.render(screen)
+    for boom in booms:
+        boom.render(screen)
     screen.blit(text, textpos)
     screen.blit(text2, textpos2)
     screen.blit(text4, textpos4)
     screen.blit(text6, textpos6)
     screen.blit(text7, textpos7)
     screen.blit(text8, textpos8)
+    if p2count == 0:
+        screen.blit(text3, textpos3)
+        if reloads != 0:
+            reloads -= 1
+        else:
+            time.sleep(1)
+            p2count = 20
+            player2 = 20
+            for k in reversed(range(0, len(bonuses))):
+                bonuses.pop(k)
+            level += 1
+            if level == 3:
+                screen.fill((0, 0, 0))
+                screen.blit(text9, textpos9)
+                if reloads != 0:
+                    reloads -= 1
+                else:
+                    time.sleep(1)
+                    reloads = 60
+                    go = False
+                    done = True
+            else:
+                matrix = levels.lev[level]
+            reloads = 60
+            shbonus = random.randint(300, 700)
+            enable = 0
+            powerp = play.power
+            play = 0
+            play = Player(ggx, ggy)
+            play.power = powerp
 
-    if bbase.basehp < 1 or plives < 1:
+
+    elif bbase.basehp < 1 or plives < 1:
         screen.blit(text5, textpos5)
         if reloads != 0:
             reloads -= 1
         else:
             time.sleep(1)
             reloads = 60
-            running = False
-            go = True
+            go = False
+            done = True
+
     pygame.display.flip()
     clock.tick(30)
