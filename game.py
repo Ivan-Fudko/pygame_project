@@ -364,6 +364,28 @@ class Player:
             elif (X_axisl == 1 or X_axisl == 2 or X_axisl == 4 or X_axisl == 6) and self.orient == 3:
                 self.wall = 3
 
+    def touch(self, i):
+        if self.orient == 1:
+            if self.ggx == enemyes[i].x and self.ggy - 10 == enemyes[i].y:
+                self.wall = 1
+                return True
+            return False
+        elif self.orient == 2:
+            if self.ggx == enemyes[i].x and self.ggy + 10 == enemyes[i].y:
+                self.wall = 2
+                return True
+            return False
+        elif self.orient == 3:
+            if self.ggx - 10 == enemyes[i].x and self.ggy == enemyes[i].y:
+                self.wall = 3
+                return True
+            return False
+        elif self.orient == 4:
+            if self.ggx + 10 == enemyes[i].x and self.ggy == enemyes[i].y:
+                self.wall = 4
+                return True
+            return False
+
     def render(self, screen):
         screen.blit(self.gg, (self.ggx * 2, self.ggy * 2))
 
@@ -569,6 +591,7 @@ enable = 0
 reloads = 60
 bonuses = []
 shbonus = random.randint(300, 700)
+counten = 0
 
 while running:
     for event in pygame.event.get():
@@ -608,9 +631,6 @@ while running:
                     elif play.power == 4:
                         plshoot = 19
                     fight = 20
-
-
-
 
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT and play.orient == 3:
@@ -879,7 +899,6 @@ while running:
             play = 0
             play = Player(ggx, ggy)
             play.power = powerp
-
 
     elif bbase.basehp < 1 or plives < 1:
         screen.blit(text5, textpos5)
